@@ -9,26 +9,31 @@
             margin: 0;
             position: relative;
             text-align: center;
+            background-image: url(assets/phaserBg.png);
+            background-position: center center;
         }
         
         #gameContainer{
-	        height: 600px;
-	        width: 800px;
-	        margin: 10px auto;
-        }
+	        width: 600px;
+	        height: 400px;
+	        margin: 100px auto;
+			border-radius: 7px;
+			outline: none;
+		    border-color: #9ecaed;
+		    box-shadow: 0 0 20px #9ecaed;
+		}
     </style>
 </head>
 <body>
 	
 <script type="text/javascript">
 
-var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'gameContainer', { preload: preload, create: create, update: update });
+var game = new Phaser.Game(600, 400, Phaser.CANVAS, 'gameContainer', { preload: preload, create: create, update: update });
 
 function preload() {
 
 	
-    game.load.image('splashscreen', 'assets/splashscreen.png');
-    game.load.image('sky', 'assets/sky.png');
+    game.load.image('bg1', 'assets/sky.png');
     game.load.image('ground', 'assets/platform.png');
     
     //DROPS
@@ -38,16 +43,14 @@ function preload() {
     game.load.image('diamond', 'assets/diamond.png');
     game.load.image('steak', 'assets/steak.png');
     
-    game.load.spritesheet('baddie', 'assets/baddie.png', 32, 32);
     
     game.load.spritesheet('dude', 'assets/dude.png', 32, 48);
-    game.load.spritesheet('dudePoisoned', 'assets/dude_poisoned.png', 32, 48);
-    game.load.spritesheet('dudePoisoned2', 'assets/dude_poisoned2.png', 32, 48);
+    
+    
 
 }
 
 var player;
-var player2;
 var platforms;
 var cursors;
 
@@ -60,6 +63,8 @@ var steaks;
 var score = 0;
 var scoreText;
 
+var anotherone = true;
+
 
 function create() {
     //  We're going to be using physics, so enable the Arcade Physics system
@@ -67,6 +72,8 @@ function create() {
 
     //  A simple background for our game
     game.add.sprite(0, 0, 'sky');
+    
+    bgtile = game.add.tileSprite(0, 0, game.stage.bounds.width, game.cache.getImage('bg1').height, 'bg1');
 
     //  The platforms group contains the ground and the 2 ledges we can jump on
     platforms = game.add.group();
@@ -83,38 +90,21 @@ function create() {
     //  This stops it from falling away when you jump on it
     ground.body.immovable = true;
 
-    //  Now let's create two ledges
-    var ledge = platforms.create(400, 400, 'ground');
-    ledge.body.immovable = true;
-
-    ledge = platforms.create(-150, 250, 'ground');
-    ledge.body.immovable = true;
-
     // The player and its settings
-    player = game.add.sprite(32, game.world.height - 150, 'dude');
-    player2 = game.add.sprite(62, game.world.height - 150, 'baddie');
-    
+    player = game.add.sprite(game.world.width/3, game.world.height - 150, 'dude');
     
     //  We need to enable physics on the player
     game.physics.arcade.enable(player);
-    game.physics.arcade.enable(player2);
 
     //  Player physics properties. Give the little guy a slight bounce.
-    player.body.bounce.y = 0.2;
-    player.body.gravity.y = 300;
+    player.body.bounce.y = 0.1;
+    player.body.gravity.y = 800;
     player.body.collideWorldBounds = true;
-
-    player2.body.bounce.y = 0.2;
-    player2.body.gravity.y = 300;
-    player2.body.collideWorldBounds = true;
 
     //  Our two animations, walking left and right.
     player.animations.add('left', [0, 1, 2, 3], 10, true);
     player.animations.add('right', [5, 6, 7, 8], 10, true);
     player.animations.add('idle', [4], 10, true);    
-
-    player2.animations.add('leftBaddie', [0, 1], 10, true);
-    player2.animations.add('rightBaddie', [2, 3], 10, true);
     
     //  Finally some stars to collect
     stars = game.add.group();
@@ -134,7 +124,7 @@ function create() {
     for (var i = 0; i < 12; i++)
     {		
 		rndObj = Math.floor((Math.random() * 5));
-		createDrops(i, rndObj);		
+		//createDrops(i, rndObj);		
     }
     
     //  The score
@@ -142,102 +132,68 @@ function create() {
     
     //  Our controls.
     cursors = game.input.keyboard.createCursorKeys();
-    
+
+	player.animations.play('right');
+	
 }
 
 function update() {
 
     //  Collide the player and the objects with the platforms
     game.physics.arcade.collide(player, platforms);   
-    game.physics.arcade.collide(player2, platforms);   
     game.physics.arcade.collide(stars, platforms);
     game.physics.arcade.collide(poisons, platforms);
-    game.physics.arcade.collide(firstaids, platforms);
-    game.physics.arcade.collide(diamonds, platforms);
-    game.physics.arcade.collide(steaks, platforms);
+    //game.physics.arcade.collide(firstaids, platforms);
+    //game.physics.arcade.collide(diamonds, platforms);
+    //game.physics.arcade.collide(steaks, platforms);
 
     //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
     game.physics.arcade.overlap(player, stars, collectStar, null, this);
     game.physics.arcade.overlap(player, poisons, collectPoison, null, this);
-    game.physics.arcade.overlap(player, firstaids, collectFirstaid, null, this);
-    game.physics.arcade.overlap(player, diamonds, collectDiamond, null, this);
-    game.physics.arcade.overlap(player, steaks, collectSteak, null, this);
+    //game.physics.arcade.overlap(player, firstaids, collectFirstaid, null, this);
+    //game.physics.arcade.overlap(player, diamonds, collectDiamond, null, this);
+    //game.physics.arcade.overlap(player, steaks, collectSteak, null, this);
 
     //  Reset the players velocity (movement)
     player.body.velocity.x = 0;
-    player2.body.velocity.x = 0;
-
-    if (cursors.left.isDown)
-    {
-        //  Move to the left
-        player.body.velocity.x = -150;
-
-		player.animations.play('left');
-	}
-    else if (cursors.right.isDown)
-    {
-        //  Move to the right
-        player.body.velocity.x = 150;
-
-		player.animations.play('right');
-    }
-    else
-    {
-        //  Stand still
-		//player.animations.stop();
-		//player.frame = 4;	    	
-		
-		player.animations.play('idle');
-
-    }
+    
     
     //  Allow the player to jump if they are touching the ground.
     if (cursors.up.isDown && player.body.touching.down)
     {
         player.body.velocity.y = -350;
     }
-
-
-    keyLeft = game.input.keyboard.addKey(Phaser.Keyboard.A);
-    keyRight = game.input.keyboard.addKey(Phaser.Keyboard.D);
-    keyUp = game.input.keyboard.addKey(Phaser.Keyboard.W);
-
-    if (keyLeft.isDown)
-    {
-        //  Move to the left
-        player2.body.velocity.x = -150;
-
-		player2.animations.play('leftBaddie');
-	}
-    else if (keyRight.isDown)
-    {
-        //  Move to the right
-        player2.body.velocity.x = 150;
-
-		player2.animations.play('rightBaddie');
-    }
-    else
-    {
-        //  Stand still
-		player2.animations.stop();
-		
-    }
     
-    //  Allow the player to jump if they are touching the ground.
-    if (keyUp.isDown && player2.body.touching.down)
-    {
-        player2.body.velocity.y = -350;
-    }
-
+	if(player.body.touching.down){
+		player.animations.play('right');
+	}else{
+        player.animations.stop();
+		player.frame = 6;	    			
+	}
+	
+	bgtile.tilePosition.x -= 5;
+	
+	/*
+	moveBackground(star);
+	
+	function moveBackground(moveObj) {
+	
+	if(moveObj.x<-20){
+		moveObj.kill()
+	}else{
+		moveObj.x -=1;
+	}
+	}*/
 }
 
+
+
 function collectStar (player, star) {
-    console.log("star "+ star.id +" killed");
     // Removes the star from the screen
     star.kill();    		
     
     rndObj = Math.floor((Math.random() * 5));
-    createDrops(star.id, rndObj);
+    //createDrops(star.id, rndObj);
           
     score += 10;
     scoreText.text = 'Score: ' + score;
@@ -245,24 +201,17 @@ function collectStar (player, star) {
 }
 
 function collectPoison (player, poison) {
-    console.log("poison "+ poison.id +" killed");
     // Removes the star from the screen
     poison.kill();
 
     rndObj = Math.floor((Math.random() * 5));
-    createDrops(poison.id, rndObj);
+    //createDrops(poison.id, rndObj);
     
-	player.loadTexture('dudePoisoned2');
-		
-    player.animations.add('left', [0, 1, 2, 3], 10, true);
-	player.animations.add('idle', [4, 5, 6], 6, true); 
-    player.animations.add('right', [7, 8, 9, 10], 10, true);    
-    
-    score -= 10;
+	score -= 10;
     scoreText.text = 'Score: ' + score;
 
 }
-
+/*
 function collectFirstaid (player, firstaid) {
     console.log("firstaid "+ firstaid.id +" killed");
     // Removes the star from the screen
@@ -348,7 +297,7 @@ function createDrops(id, rndObj){
 	    //  This just gives each star a slightly random bounce value
 	    firstaid.body.bounce.y = 0.7 + Math.random() * 0.2;		
 	}
-}
+}*/
 </script>
 <div id="gameContainer"></div>
 </body>
