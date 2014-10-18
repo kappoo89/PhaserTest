@@ -4,7 +4,7 @@
 	<meta charset="UTF-8" />
     <title>Phaser - Making your first game, part 8</title>
 	<script type="text/javascript" src="js/phaser.min.js"></script>
-    <style type="text/css">
+	<style type="text/css">
         body {
             margin: 0;
             position: relative;
@@ -24,89 +24,166 @@
 		}
     </style>
 </head>
-<body>
-	
+<body>	
 <script type="text/javascript">
 
 var game = new Phaser.Game(600, 400, Phaser.CANVAS, 'gameContainer', { preload: preload, create: create, update: update });
-
-function preload() {
-    game.load.image('bg0', 'assets/bg0.png');
-    game.load.image('bg1', 'assets/bg1.png');
-    game.load.image('bg2', 'assets/bg2.png');
-    game.load.image('ground', 'assets/platform.png');
-    game.load.image('star', 'assets/star.png');
-    game.load.spritesheet('dude', 'assets/dude.png', 32, 48);
-}
+var jump = Phaser.Sound;
+var pic_coin = Phaser.Sound;
 
 var player;
 var platforms;
 var cursors;
 var backGround1;
+var splashscreen0;
+var splashscreen1;
+var once=true;
+var once2=true;
 
 var stars;
+var poisons;
 
 var score = 0;
 var scoreText;
 
+var worldVel = -200;
+var minInterval = 0;
+var maxInterval = 3000;
 
-function create() {
-    game.physics.startSystem(Phaser.Physics.ARCADE);
-       
-	bgStart =  game.add.sprite(0,0,'bg0');
-	game.physics.enable(bgStart, Phaser.Physics.ARCADE);
-	bgStart.body.velocity.x = -150;
+function preload() {
 
-	backGrounds = game.add.group();
-	backGrounds.enableBody = true;
-	backGround1 = backGrounds.create(game.world.width,0, 'bg2');
-	backGround1.body.velocity.x = -150;
-
-    platforms = game.add.group();
-    platforms.enableBody = true;
-    var ground = platforms.create(0, game.world.height - 64, 'ground');
-    ground.scale.setTo(2, 2);
-    ground.body.immovable = true;
-
-    player = game.add.sprite(game.world.width/3, game.world.height - 150, 'dude');
-    game.physics.arcade.enable(player);
-    player.body.bounce.y = 0.1;
-    player.body.gravity.y = 800;
-    player.body.collideWorldBounds = true;
-
-    player.animations.add('right', [5, 6, 7, 8],8, true);
+    game.load.image('splashscreen0', 'assets/splashscreens/Splash-screen.png');
+    game.load.image('splashscreen1', 'assets/splashscreens/Splash-screen2.png');
     
-    //  Finally some stars to collect
-    stars = game.add.group();    
-    stars.enableBody = true;
+    game.load.image('bg0', 'assets/backgrounds/bg0.png');
+    game.load.image('bg1', 'assets/backgrounds/bg1.png');
+    game.load.image('bg2', 'assets/backgrounds/bg2.png');
+    game.load.image('ground', 'assets/backgrounds/platform.png');
 
-    scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+    game.load.image('star', 'assets/objects/star.png');
+    game.load.image('poison', 'assets/objects/poison.png');
+
+    game.load.spritesheet('dude', 'assets/characters/dude.png', 32, 48);
+
+	game.load.audio('jump', 'assets/audio/jump.mp3');
+    game.load.audio('pic_coin', 'assets/audio/pic_coin.mp3');
     
-    //  Our controls.
-    cursors = game.input.keyboard.createCursorKeys();
-
-	player.animations.play('right');
-
-
-	game.time.events.loop(2000, createDrops, this); 
-
-	
 }
 
+function create() {
+	
+    	game.physics.startSystem(Phaser.Physics.ARCADE);
+ 		
+     	bgStart =  game.add.sprite(0,0,'bg0');
+	 	game.physics.enable(bgStart, Phaser.Physics.ARCADE);
+
+		backGrounds = game.add.group();
+		backGrounds.enableBody = true;
+		backGround1 = backGrounds.create(game.world.width,0, 'bg2');
+	
+	    platforms = game.add.group();
+	    platforms.enableBody = true;
+	    var ground = platforms.create(0, game.world.height - 64, 'ground');
+	    ground.scale.setTo(2, 2);
+	    ground.body.immovable = true;
+	
+	    player = game.add.sprite(game.world.width/3, game.world.height - 150, 'dude');
+	    game.physics.arcade.enable(player);
+	    player.body.bounce.y = 0.1;
+	    player.body.gravity.y = 800;
+	    player.body.collideWorldBounds = true;
+	
+	    player.animations.add('right', [5, 6, 7, 8],8, true);
+	    
+	    //  Finally some stars to collect
+	    stars = game.add.group();    
+	    stars.enableBody = true;
+	    
+	    poisons = game.add.group();    
+	    poisons.enableBody = true;
+	    
+	    createDrops();
+	
+	    scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+	    
+	    cursors = game.input.keyboard.createCursorKeys();
+	
+		player.animations.play('right');
+	
+		//increase speed each 10 sec
+		//game.time.events.loop(10000, increaseSpeed, this); 
+	
+		//game.time.events.loop(4000, delayDrops, this); 
+		game.time.events.loop(3500, createDrops, this); 
+		
+	    jump = game.add.audio('jump');
+	    pic_coin = game.add.audio('pic_coin');
+	    
+	    ////// MENU (pausa/riprendi)
+	    pause_label = game.add.text(600 - 100, 20, 'Pause', { font: '24px Arial', fill: '#fff' });
+	    pause_label.inputEnabled = true;
+	    
+	    pause_label.events.onInputUp.add(function () {
+	    	game.paused = true;
+	    	
+			choiseLabel = game.add.text(600/2, 400-150, 'Click anywhere to continue', { font: '30px Arial', fill: '#fff' });
+		    choiseLabel.anchor.setTo(0.5, 0.5);
+	    });
+		
+	    game.input.onDown.add(unpause, self);
+	    
+	    
+		splashscreen0 =  game.add.sprite(0,0,'splashscreen0');
+		
+		now = game.time.time;
+}
 
 function update() {
 
+	console.log('now: ' +now +", game.time.time: "+game.time.time + ", deltaTime: "+(game.time.time-now));
+
+	if (game.time.time > now+2000) {
+		
+		if(once){			
+			console.log('now + 2000');
+			splashscreen0.destroy();
+			splashscreen1 =  game.add.sprite(0,0,'splashscreen1');		
+			once = false;		
+		}
+	
+	}
+	
+	
+	if (game.time.time > now+4000) {
+		
+		if(once2){
+			console.log('now + 4000');
+			splashscreen1.destroy();
+			once = false;
+		}
+	}
+	//Avvio il gioco
+	
+	bgStart.body.velocity.x = worldVel;  
+	backGround1.body.velocity.x = worldVel;
+
+	
+	
+	
     //  Collide the player and the objects with the platforms
     game.physics.arcade.collide(player, platforms);   
     game.physics.arcade.collide(stars, platforms);
+    game.physics.arcade.collide(poisons, platforms);
 
     game.physics.arcade.overlap(player, stars, collectStar, null, this);
+    game.physics.arcade.overlap(player, poisons, collectPoison, null, this);
 
     player.body.velocity.x = 0;
 
     if (cursors.up.isDown && player.body.touching.down)
     {
         player.body.velocity.y = -350;
+        jump.play();
     }
     
 	if(player.body.touching.down){
@@ -116,56 +193,69 @@ function update() {
 		player.frame = 6;	    			
 	}
 	
-	console.log(parseInt(backGround1.body.position.x));
+	//console.log(parseInt(backGround1.body.position.x));
 	
 	if(parseInt(backGround1.body.position.x) <= 0){
-		console.log('hey sono passato da zero');
-		console.log('ho aggiunto un nuovo background');
 		createBackground();
 	}	
 	
 	if(parseInt(backGround1.body.position.x) <= -600){
-		console.log('hey sono passato da -600');
-		console.log('ho cancellato un vecchio background');
 		backGround1.destroy();
-	}		
+	}
+		
+}
+
+function unpause(event){
+        if(game.paused){
+            choiseLabel.destroy();
+            game.paused = false;
+        }
+};
+     
+function increaseSpeed(){
+	if(worldVel<500){
+		worldVel = worldVel+(worldVel/80);
+		console.log(worldVel);
+		//backGround1.body.velocity.x = worldVel;
+	}
+}
+
+function delayDrops(){
+	rndInterval = Math.random() * (maxInterval - minInterval) + minInterval;
+	console.log(rndInterval);
+	game.time.events.repeat(rndInterval, 1, createDrops);
 }
 
 function createBackground(){
-	
-	rndInt = Math.floor((Math.random() * 2));
+	rndInt = Math.floor((Math.random() * 3));
 	backGround1 = backGrounds.create(game.world.width-2,0, 'bg'+rndInt);
-	backGround1.body.velocity.x = -150;
+	backGround1.body.velocity.x = worldVel;
 }
 
-function createDrops(){
-	
-	var star = stars.create(game.world.width, game.world.height-100, 'star');
-	star.body.velocity.x = -150;
+function createDrops(){	
+	if (Phaser.Math.chanceRoll(50)) {
+		star = stars.create(game.world.width, game.world.height-100, 'star');
+		star.body.velocity.x = worldVel;		
+	}else{
+		var poison = poisons.create(game.world.width, game.world.height-100, 'poison');
+		poison.body.velocity.x = worldVel;				
+	}
 }
-
 
 function collectStar (player, star) {
-    // Removes the star from the screen
     star.kill();    		
-    
+    pic_coin.play();
+
     score += 10;
     scoreText.text = 'Score: ' + score;
-
 }
-/*
-function collectPoison (player, poison) {
-    // Removes the star from the screen
-    poison.kill();
 
-    rndObj = Math.floor((Math.random() * 5));
-    //createDrops(poison.id, rndObj);
+function collectPoison (player, poison) {
+    poison.kill();
     
 	score -= 10;
     scoreText.text = 'Score: ' + score;
-
 }
-*/
 
 </script>
 <div id="gameContainer"></div>
