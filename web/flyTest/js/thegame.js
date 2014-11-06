@@ -1,6 +1,5 @@
 var theGame = function(game){
 
-	jump = Phaser.Sound;
 	pic_coin = Phaser.Sound;
 	pic_poison = Phaser.Sound;
 	mainTheme = Phaser.Sound;
@@ -9,9 +8,8 @@ var theGame = function(game){
 	clones = null;
 
 	stars = null;
-	poisons = null;
+	asteroids = null;
 	
-	platforms = null;
 	bgtile = null;
 
 	cursors = null;
@@ -76,8 +74,8 @@ theGame.prototype = {
    		stars = this.game.add.group();
    		stars.enableBody = true;
    		
-	    poisons = this.game.add.group();
-	    poisons.enableBody = true;
+	    asteroids = this.game.add.group();
+	    asteroids.enableBody = true;
 	    
 		clones = this.game.add.group();
    		clones.enableBody = true;		    
@@ -92,7 +90,6 @@ theGame.prototype = {
   		mainTheme = this.game.add.audio('mainTheme');
   		mainTheme.play('',0,1,true);
 		
-	    jump = this.game.add.audio('jump');
 	    pic_coin = this.game.add.audio('pic_coin');
 	    pic_poison = this.game.add.audio('pic_poison');
 	    
@@ -130,7 +127,7 @@ theGame.prototype = {
 		bgtile.autoScroll(worldVel, 0);
 		stars.setAll('body.velocity.x', worldVel);
 	 	bgStart.body.velocity.x = worldVel; 
-		poisons.setAll('body.velocity.x', worldVel);
+		asteroids.setAll('body.velocity.x', worldVel);
 		
 		
 		distance = parseInt(this.game.physics.arcade.distanceBetween(player, bgStart)/20);
@@ -138,15 +135,11 @@ theGame.prototype = {
 		distanceText.text = 'DISTANCE:' + distance;
 		worldVelText.text = 'SPEED:' + worldVel;
 
-		//player collect stars and poisons		
+		//player collect stars and asteroids		
 		this.game.physics.arcade.overlap(player, stars, this.collectStar, null, this);
-	   	this.game.physics.arcade.overlap(player, poisons, this.collectPoison, null, this);
+	   	this.game.physics.arcade.overlap(player, asteroids, this.collectAsteroid, null, this);
 	   	this.game.physics.arcade.overlap(player, clones, this.collectClones, null, this);
 	   	
-		if(!paused){
-			player.animations.play('right');	
-		}
-
 	},	
 	pauseGame: function(){
 		if(!paused){
@@ -189,7 +182,7 @@ theGame.prototype = {
 	   		
 	   		//LOOP
 			LoopDrop = this.game.time.events.loop(500, this.createDrops, this)
-			LoopClone = this.game.time.events.loop(15200, this.createClone, this);
+			LoopClone = this.game.time.events.loop(14000, this.createUfo, this);
 			
 	   		mainTheme.resume();
 		}
@@ -206,7 +199,6 @@ theGame.prototype = {
 	createDrops: function(){
 		
 		randomY = (Math.floor(Math.random()*40))*10;
-		console.log(randomY);
 		
 		x = this.game.world.width + 100;
 		y = this.game.world.height - randomY;
@@ -220,19 +212,22 @@ theGame.prototype = {
 			
 			randInt = Math.floor(Math.random()*4+1);
 			
-			var poison = poisons.create(x, y, 'asteroid_'+randInt);
+			var asteroid = asteroids.create(x, y, 'asteroid_'+randInt);
 			
 			randDimension = Math.floor(Math.random()*2+1);
 			
-			poison.scale.setTo(randDimension, randDimension);
+			asteroid.scale.setTo(randDimension, randDimension);
 
-			poison.body.velocity.x = worldVel;
+			asteroid.body.velocity.x = worldVel;
 		}
 	},
-	createClone: function(){
+	createUfo: function(){
+		
+		randomY = (Math.floor(Math.random()*40))*10;
+
 		
 		x = this.game.world.width + 200;
-		y = this.game.world.height - 140;
+		y = this.game.world.height - randomY;
 
 
 		clone = clones.create(x, y, 'ufo');
@@ -250,8 +245,8 @@ theGame.prototype = {
 	    score += 10;
 	    scoreText.text = 'SCORE: ' + score;
 	},
-	collectPoison: function(player, poison){
-	    poison.kill();
+	collectAsteroid: function(player, asteroid){
+	    asteroid.kill();
    	    pic_poison.play();
 	    
 	    this.decreaseSpeed();
@@ -290,7 +285,7 @@ theGame.prototype = {
 		this.game.debug.body(player);
 		
 		stars.forEachAlive(this.renderGroup, this);
-		poisons.forEachAlive(this.renderGroup, this);
+		asteroids.forEachAlive(this.renderGroup, this);
 	},
 	renderGroup: function(member) {
 	    this.game.debug.body(member);

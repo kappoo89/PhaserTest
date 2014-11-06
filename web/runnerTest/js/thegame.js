@@ -40,8 +40,13 @@ var theGame = function(game){
 theGame.prototype = {
   	create: function(){
 
-	    cursors = this.game.input.keyboard.createCursorKeys();
-		this.game.physics.startSystem(Phaser.Physics.ARCADE);
+  		this.game.physics.startSystem(Phaser.Physics.ARCADE);
+
+
+  		//SETUP CONTROLS
+  		this.game.input.addPointer();
+  		cursors = this.game.input.keyboard.createCursorKeys();
+		
 
 		//SETUP BACKGROUND
      	bgStart =  this.game.add.sprite(0,0,'star');
@@ -133,7 +138,8 @@ theGame.prototype = {
 	   	this.game.physics.arcade.overlap(player, poisons, this.collectPoison, null, this);
 	   	this.game.physics.arcade.overlap(player, clones, this.collectClones, null, this);
 	   	
-	    if (cursors.up.isDown && player.body.touching.down)
+//	    if (cursors.up.isDown && player.body.touching.down)
+	    if (this.game.input.mousePointer.isDown && player.body.touching.down || this.game.input.pointer1.isDown && player.body.touching.down)
 	    {
 		    player.body.velocity.y = -350;
 	        jump.play();
