@@ -1,0 +1,147 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+    <title>Phaser - Making your first game, part 8</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+            position: relative;
+            text-align: center;
+        }
+        
+        #gameContainer{
+	        height: 600px;
+	        width: 800px;
+	        margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+	
+<script type="text/javascript">
+
+var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'gameContainer', { preload: preload, create: create, update: update, render: render});
+
+function preload() {
+
+      game.load.image('somesprite', 'assets/test5.png');
+      game.load.image('arrow', 'assets/arrow.png');
+}
+
+var sprite;
+var mouseDegree = 0;
+var mouseDegreeOld = 0;
+var speed = 0;
+var startMouseDegree = false;
+var oldSpriteAngle = false;
+function create() {
+	sprite = game.add.sprite(game.stage.bounds.width/2, game.stage.bounds.height/2, 'somesprite');
+	sprite.anchor.set(0.5,0.5);
+	sprite.scale.setTo(1.4, 1.4);
+	
+	arrow = game.add.sprite(game.stage.bounds.width/2, game.stage.bounds.height-570, 'arrow');
+	arrow.anchor.set(0.5,0.5);
+	arrow.scale.setTo(0.2, 0.4);	
+
+	game.stage.backgroundColor = 0xd2d2d2;	
+	game.physics.startSystem(Phaser.Physics.ARCADE);
+	game.physics.arcade.gravity.y = 0
+	game.physics.arcade.enable(sprite, true);
+
+
+}
+
+function update() {
+	
+	mouseDegreeOld = degreeFromAtan2(mouseDegree);
+
+	mouseeRad = game.physics.arcade.angleToPointer(sprite);
+	mouseDegree = Phaser.Math.radToDeg(mouseeRad);
+	mouseDegree = degreeFromAtan2(mouseDegree);
+
+	if (game.input.activePointer.isDown && touchable) {
+		
+		if(startMouseDegree == false) {
+			startMouseDegree = mouseDegree;
+			oldSpriteAngle = sprite.angle;
+		}
+		
+		mouseDegree = oldSpriteAngle + mouseDegree - startMouseDegree;
+		
+		speed = mouseDegree - mouseDegreeOld;
+		giraLaRuota();
+	}else{		
+		touchable = false;
+		sprite.body.angularVelocity = speed * 100;	
+		
+		speed = speed - (speed/50);		
+		
+		if(speed < 0.01 && speed > -0.01){
+			speed = 0;
+			touchable = true;
+			alert(getQuestion(mouseDegree, 5));
+			startMouseDegree = false;
+		}
+	}
+}
+
+function render() {
+
+    game.debug.spriteInfo(sprite, 32, 32);
+	game.debug.text('angularVelocity: ' + sprite.body.angularVelocity, 32, 120);
+	game.debug.text('speed: ' + speed, 32, 152);
+   	game.debug.text('angularAcceleration: ' + sprite.body.angularAcceleration, 32, 184);
+ 	game.debug.text('angularDrag: ' + sprite.body.angularDrag, 32, 216);
+    game.debug.text('deltaZ: ' + sprite.body.deltaZ(), 32, 248);
+    
+}
+
+////////////////////////////////////////////////////////////////
+
+function giraLaRuota() {
+	sprite.angle = mouseDegree;
+}
+
+function degreeFromAtan2(degree){
+	
+	if(degree<0) {
+		
+		degree = ((180+degree)+180)%360;
+	}
+	
+	return degree;
+}
+
+function sfasaDiMeno90(degree) {
+	
+	degree = 360 - ((degree+90)%360);
+	
+	return degree;
+	
+}
+
+function findSpicchioFromDegree(degree, numSpicchi) {
+	
+	return parseInt(degree/(360/numSpicchi))+1;
+}
+
+function getQuestion(degree, numSpicchi){
+	
+	degree = degreeFromAtan2(degree);
+	
+	degree = sfasaDiMeno90(degree);
+	
+	spicchio = findSpicchioFromDegree(degree, numSpicchi);
+	
+	string = "spicchio" + spicchio;
+	
+	return string;			
+}
+
+
+</script>
+<div id="gameContainer"></div>
+</body>
+</html>

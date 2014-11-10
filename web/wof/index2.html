@@ -1,0 +1,150 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+    <title>Phaser - Making your first game, part 8</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+            position: relative;
+            text-align: center;
+        }
+        
+        #gameContainer{
+	        height: 600px;
+	        width: 600px;
+	        margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+	
+<script type="text/javascript">
+
+var game = new Phaser.Game(600, 600, Phaser.CANVAS, 'gameContainer', { preload: preload, create: create, update: update, render: render});
+
+function preload() {
+
+//    game.load.image('somesprite','http://examples.phaser.io/assets/sprites/phaser.png');
+      game.load.image('somesprite', 'assets/test5.png');
+      game.load.image('arrow', 'assets/arrow.png');
+
+
+}
+
+var sprite;
+var cursors;
+
+function create() {
+	
+	game.stage.backgroundColor = 0xd2d2d2;
+
+	//  Enable p2 physics
+	game.physics.startSystem(Phaser.Physics.P2JS);
+	game.physics.p2.gravity.y = 0
+
+	//  Add a sprite
+	sprite = game.add.sprite(game.stage.bounds.width/2, game.stage.bounds.height/2, 'somesprite');
+	sprite.anchor.set(0.5,0.5);
+	sprite.scale.setTo(1.4, 1.4);
+	
+	arrow = game.add.sprite(game.stage.bounds.width/2, game.stage.bounds.height-570, 'arrow');
+	arrow.anchor.set(0.5,0.5);
+	arrow.scale.setTo(0.2, 0.4);
+	
+	//  Enable if for physics. This creates a default rectangular body.
+	game.physics.p2.enable(sprite, false);
+	cursors = game.input.keyboard.createCursorKeys();
+}
+
+function update() {
+	//1. angleToPointer makes no assumption over our current angle- th thinks it's always 0
+	//2. so include the current rotation of our sprite in the expression
+	//3. subtract Math.PI/2 as the angle of atan2 (which is sued by angleToPointer) is rotated by 90deg (this is Math.PI/2)
+	
+	//Result: Now we have a delta value that if applied directly to rotation would yield
+	//in a value so that the sprites top center points to the mouse.
+	deltaMouseRad = sprite.rotation - game.physics.arcade.angleToPointer(sprite);
+	
+	mod = Math.PI * 2
+	//modulo on float, works in js, means: clamp value to [-Math.PI*2,Math.PI*2]
+	deltaMouseRad = deltaMouseRad % mod; 
+	
+	//lets call it phase shift, angle would jump, lets fix it
+	if (deltaMouseRad != deltaMouseRad % (mod/2) ) { 
+	deltaMouseRad = (deltaMouseRad < 0) ? deltaMouseRad + mod : deltaMouseRad - mod;
+	}
+	//speed is some factor to get the object faster to the target rotation.
+	//remember we are wotking with the angle velocity and let the engine
+	//rotate the body
+	
+	speed = 100;
+	
+	console.log(deltaMouseRad);
+	if (this.game.input.activePointer.isDown) {
+		sprite.body.rotateLeft(speed * deltaMouseRad);		
+	}
+	
+	console.log(speed);
+	
+	if(sprite.body.angularVelocity.toFixed(1) == 0.0){
+		sprite.body.angularVelocity = 0;		
+	}
+	
+	sprite.body.angularDrag = 100;
+}
+
+function degreeFromAtan2(degree){
+	
+	if(degree<0) {
+		
+		degree = ((180+degree)+180)%360;
+	}
+	
+	return degree;
+}
+
+function sfasaDiMeno90(degree) {
+	
+	degree = 360 - ((degree+90)%360);
+	
+	return degree;
+	
+}
+
+function findSpicchioFromDegree(degree, numSpicchi) {
+	
+	return parseInt(degree/(360/numSpicchi))+1;
+}
+
+function getQuestion(degree, numSpicchi){
+	
+	degree = degreeFromAtan2(degree);
+	
+	degree = sfasaDiMeno90(degree);
+	
+	spicchio = findSpicchioFromDegree(degree, numSpicchi);
+	
+	string = "spicchio" + spicchio;
+	
+	return string;			
+}
+
+function updateSimple(){
+  //sprite.body.rotation = game.physics.arcade.angleToPointer(sprite) - Math.PI
+}
+
+function render() {
+
+    game.debug.spriteInfo(sprite, 32, 32);
+    game.debug.text('angularVelocity: ' + sprite.body.angularVelocity, 32, 120);
+    game.debug.text('angularAcceleration: ' + sprite.body.angularAcceleration, 32, 152);
+    game.debug.text('angularDrag: ' + sprite.body.angularDrag, 32, 184);
+    //game.debug.text('deltaZ: ' + sprite.body.deltaZ(), 32, 216);
+
+}
+</script>
+<div id="gameContainer"></div>
+</body>
+</html>
