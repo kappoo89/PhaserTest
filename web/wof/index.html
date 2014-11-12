@@ -4,6 +4,7 @@
 	<meta charset="UTF-8" />
     <title>Phaser - Making your first game, part 8</title>
 	<script type="text/javascript" src="js/phaser.min.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <style type="text/css">
         body {
             margin: 0;
@@ -22,11 +23,11 @@
 	
 <script type="text/javascript">
 
-var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'gameContainer', { preload: preload, create: create, update: update, render: render});
+var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'gameContainer', { preload: preload, create: create, update: update});
 
 function preload() {
 
-      game.load.image('somesprite', 'assets/test5.png');
+      game.load.image('somesprite', 'assets/test13.png');
       game.load.image('arrow', 'assets/arrow.png');
 }
 
@@ -36,58 +37,81 @@ var mouseDegreeOld = 0;
 var speed = 0;
 var startMouseDegree = false;
 var oldSpriteAngle = false;
+var enter = false;
+
+var circle;
 function create() {
 	sprite = game.add.sprite(game.stage.bounds.width/2, game.stage.bounds.height/2, 'somesprite');
 	sprite.anchor.set(0.5,0.5);
 	sprite.scale.setTo(1.4, 1.4);
-	
-	arrow = game.add.sprite(game.stage.bounds.width/2, game.stage.bounds.height-570, 'arrow');
+	//sprite.inputEnabled = true;
+
+	arrow = game.add.sprite(game.stage.bounds.width/2, game.stage.bounds.height-560, 'arrow');
 	arrow.anchor.set(0.5,0.5);
 	arrow.scale.setTo(0.2, 0.4);	
 
 	game.stage.backgroundColor = 0xd2d2d2;	
+
 	game.physics.startSystem(Phaser.Physics.ARCADE);
 	game.physics.arcade.gravity.y = 0
 	game.physics.arcade.enable(sprite, true);
 
+	
+	circle = new Phaser.Circle(game.stage.bounds.width/2, game.stage.bounds.height/2,420);
 
 }
 
 function update() {
 	
-	mouseDegreeOld = degreeFromAtan2(mouseDegree);
+	mouseDegreeOld = mouseDegree;
 
 	mouseeRad = game.physics.arcade.angleToPointer(sprite);
+	
 	mouseDegree = Phaser.Math.radToDeg(mouseeRad);
-	mouseDegree = degreeFromAtan2(mouseDegree);
+	mouseDegree = mouseDegree;
 
-	if (game.input.activePointer.isDown && touchable) {
-		
+	if (game.input.activePointer.isDown && touchable && circle.contains(game.input.mousePointer.x, game.input.mousePointer.y)) {		
 		if(startMouseDegree == false) {
 			startMouseDegree = mouseDegree;
 			oldSpriteAngle = sprite.angle;
 		}
 		
-		mouseDegree = oldSpriteAngle + mouseDegree - startMouseDegree;
+		degree = oldSpriteAngle + mouseDegree - startMouseDegree;
 		
+
 		speed = mouseDegree - mouseDegreeOld;
+		
 		giraLaRuota();
+		
+		
+		
+		
 	}else{		
 		touchable = false;
 		sprite.body.angularVelocity = speed * 100;	
 		
-		speed = speed - (speed/50);		
+		speed = speed - (speed/50);	
+		
+		if(speed != 0)
+			enter = true;
 		
 		if(speed < 0.01 && speed > -0.01){
 			speed = 0;
 			touchable = true;
-			alert(getQuestion(mouseDegree, 5));
+			if(enter){
+				getJsonQuestion(getQuestion(sprite.angle, 13));
+				enter=false;
+			}
 			startMouseDegree = false;
 		}
 	}
 }
 
 function render() {
+
+    game.debug.body(sprite);
+
+	game.debug.geom(circle,'rgba(255,205,0,0.7)');
 
     game.debug.spriteInfo(sprite, 32, 32);
 	game.debug.text('angularVelocity: ' + sprite.body.angularVelocity, 32, 120);
@@ -96,12 +120,14 @@ function render() {
  	game.debug.text('angularDrag: ' + sprite.body.angularDrag, 32, 216);
     game.debug.text('deltaZ: ' + sprite.body.deltaZ(), 32, 248);
     
+    game.debug.inputInfo(362, 32);
+    game.debug.pointer( game.input.activePointer );
 }
 
 ////////////////////////////////////////////////////////////////
 
 function giraLaRuota() {
-	sprite.angle = mouseDegree;
+	sprite.angle = degree;
 }
 
 function degreeFromAtan2(degree){
@@ -135,13 +161,81 @@ function getQuestion(degree, numSpicchi){
 	
 	spicchio = findSpicchioFromDegree(degree, numSpicchi);
 	
-	string = "spicchio" + spicchio;
+	//string = "spicchio" + spicchio;
 	
-	return string;			
+	return spicchio;			
 }
 
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+function jsonCallback(data){}
+
+
+
+function getJsonQuestion(questionNumber){
+	
+
+
+	$.ajax({
+
+	    url: "http://wheeloffortune.dev:8888/app_dev.php/getQuestion/"+questionNumber,
+	    type: 'GET',
+	    async: true,
+	    dataType: 'jsonp',
+        contentType: "application/json",
+	    jsonpCallback: 'jsonCallback',
+	 
+	}).success(function(data){
+		console.log(data)
+		
+	}).error(function(data){
+		console.log('error')
+		console.log(data)
+		
+	});
+
+
+
+///	makeCorsRequest(questionNumber);
+
+	return;	
+	$.get( "http://wheeloffortune.dev:8888/app_dev.php/getQuestion/"+questionNumber, function( json ) {
+
+
+		number = json.number;
+		text = json.text;
+		answer1 = json.answer1;	
+		answer1Class = json.answer1Correct;	
+		answer2 = json.answer2;	
+		answer2Class = json.answer2Correct;	
+		answer3 = json.answer3;	
+		answer3Class = json.answer3Correct;	
+		
+				
+		/*
+		$('#question').html(text);
+		$('#answer1').html(answer1);
+		$('#answer1').addClass( "isCorrect_"+answer1Class );
+		$('#answer2').html(answer2);
+		$('#answer2').addClass( "isCorrect_"+answer2Class );				
+		$('#answer3').html(answer3);
+		$('#answer3').addClass( "isCorrect_"+answer3Class );				
+		$('#numDomanda').html(number);
+		$('#spicchiograna').show();
+ 		*/
+		
+
+	 });
+}
+
 </script>
 <div id="gameContainer"></div>
+<div></div>
 </body>
 </html>
