@@ -23,12 +23,13 @@
 	
 <script type="text/javascript">
 
-var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'gameContainer', { preload: preload, create: create, update: update});
+var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'gameContainer', { preload: preload, create: create, update: update });
 
 function preload() {
 
       game.load.image('somesprite', 'assets/test13.png');
       game.load.image('arrow', 'assets/arrow.png');
+      game.load.image('questionBox', 'assets/question_box.png');
 }
 
 var sprite;
@@ -38,6 +39,7 @@ var speed = 0;
 var startMouseDegree = false;
 var oldSpriteAngle = false;
 var enter = false;
+var questionBlock = false;
 
 var circle;
 function create() {
@@ -56,7 +58,6 @@ function create() {
 	game.physics.arcade.gravity.y = 0
 	game.physics.arcade.enable(sprite, true);
 
-	
 	circle = new Phaser.Circle(game.stage.bounds.width/2, game.stage.bounds.height/2,420);
 
 }
@@ -70,7 +71,7 @@ function update() {
 	mouseDegree = Phaser.Math.radToDeg(mouseeRad);
 	mouseDegree = mouseDegree;
 
-	if (game.input.activePointer.isDown && touchable && circle.contains(game.input.mousePointer.x, game.input.mousePointer.y)) {		
+	if (game.input.activePointer.isDown && touchable && circle.contains(game.input.activePointer.x, game.input.activePointer.y)  && !questionBlock ) {		
 		if(startMouseDegree == false) {
 			startMouseDegree = mouseDegree;
 			oldSpriteAngle = sprite.angle;
@@ -82,9 +83,6 @@ function update() {
 		speed = mouseDegree - mouseDegreeOld;
 		
 		giraLaRuota();
-		
-		
-		
 		
 	}else{		
 		touchable = false;
@@ -109,22 +107,116 @@ function update() {
 
 function render() {
 
+	/*
+	//WHEEL DEBUG
     game.debug.body(sprite);
-
 	game.debug.geom(circle,'rgba(255,205,0,0.7)');
-
     game.debug.spriteInfo(sprite, 32, 32);
 	game.debug.text('angularVelocity: ' + sprite.body.angularVelocity, 32, 120);
 	game.debug.text('speed: ' + speed, 32, 152);
    	game.debug.text('angularAcceleration: ' + sprite.body.angularAcceleration, 32, 184);
  	game.debug.text('angularDrag: ' + sprite.body.angularDrag, 32, 216);
     game.debug.text('deltaZ: ' + sprite.body.deltaZ(), 32, 248);
-    
+  
+  	//INPUT DEBUG  
     game.debug.inputInfo(362, 32);
     game.debug.pointer( game.input.activePointer );
+    */
+  
+    //game.debug.spriteInfo(questionBox, 32, 32);
 }
 
 ////////////////////////////////////////////////////////////////
+
+function generateQuestionBox(){
+	questionBlock = true;
+	questionBox = game.add.sprite(game.stage.bounds.width/2, game.stage.bounds.height+100, 'questionBox');
+	questionBox.anchor.set(0.5,0);	
+	
+	tweenBG = game.add.tween(questionBox);
+	tweenBG.to({ y: 100 }, 1000, Phaser.Easing.Quintic.Out);
+		
+    var styleQuestion = {
+        font: "32px Calibri",
+        fill: "#ffffff",
+        align: "center",
+        stroke: "#000000",
+	    wordWrap: true,
+	    wordWrapWidth: 600,
+        strokeThickness: 3
+    };
+	
+    var styleAnswers = {
+        font: "20px Calibri",
+        fill: "#ffffff",
+        align: "center",
+        stroke: "#000000",
+	    wordWrap: true,
+	    wordWrapWidth: 650,
+        strokeThickness: 2
+    };
+
+	questionText = game.add.text(game.stage.bounds.width/2, game.stage.bounds.height+150, 'text', styleQuestion);
+	questionText.anchor.set(0.5,0);
+	
+	tweenQuestion = game.add.tween(questionText);
+	tweenQuestion.to({ y: 150 }, 1000, Phaser.Easing.Quintic.Out);
+
+	answer1Text = game.add.text(game.stage.bounds.width/2, game.stage.bounds.height+300, 'answer1', styleAnswers);
+	answer1Text.anchor.set(0.5,0);
+	tweenA1 = game.add.tween(answer1Text);
+	tweenA1.to({ y: 300 }, 1000, Phaser.Easing.Quintic.Out);
+
+
+	answer2Text = game.add.text(game.stage.bounds.width/2, game.stage.bounds.height+330, 'answer2', styleAnswers);
+	answer2Text.anchor.set(0.5,0);	
+	tweenA2 = game.add.tween(answer2Text);
+	tweenA2.to({ y: 330 }, 1000, Phaser.Easing.Quintic.Out);
+	
+	
+	answer3Text = game.add.text(game.stage.bounds.width/2, game.stage.bounds.height+360, 'answer3', styleAnswers);
+	answer3Text.anchor.set(0.5,0);	
+	tweenA3 = game.add.tween(answer3Text);
+	tweenA3.to({ y: 360 }, 1000, Phaser.Easing.Quintic.Out);
+}
+
+function correctAnswer(answer, pointer) {
+	console.log('giusto');
+	//window.location.replace("https://www.google.it/search?q=giusto&espv=2&source=lnms&tbm=isch&sa=X&ei=9NRkVK3RC9HvaOjWgfgE&ved=0CAYQ_AUoAQ&biw=2130&bih=1320");
+	//removeQuestionBox();
+}
+
+function wrongAnswer(answer, pointer) {
+	console.log('sbagliato');
+	//window.location.replace("https://www.google.it/search?q=giusto&espv=2&source=lnms&tbm=isch&sa=X&ei=9NRkVK3RC9HvaOjWgfgE&ved=0CAYQ_AUoAQ&biw=2130&bih=1320#tbm=isch&q=sbagliato");
+	
+	//removeQuestionBox();
+}
+	
+
+function removeQuestionBox(){	
+	questionBlock = false;	
+	questionBox.destroy();
+	questionText.destroy();
+	answer1Text.destroy();
+	answer2Text.destroy();
+	answer3Text.destroy();
+	/*
+	easing = Phaser.Easing.Linear.Out;
+	
+	tweenBG.to({ y: game.stage.bounds.height+questionBox.position.y }, 1000, easing);
+	tweenQuestion.to({ y: game.stage.bounds.height+questionText.position.y }, 1000, easing);
+	tweenA1.to({ y: game.stage.bounds.height+answer1Text.position.y }, 1000, easing);
+	tweenA2.to({ y: game.stage.bounds.height+answer2Text.position.y }, 1000, easing);
+	tweenA3.to({ y: game.stage.bounds.height+answer3Text.position.y }, 1000, easing);
+	
+	tweenBG.start();
+	tweenQuestion.start();
+	tweenA1.start();
+	tweenA2.start();
+	tweenA3.start();
+	*/
+}
 
 function giraLaRuota() {
 	sprite.angle = degree;
@@ -167,24 +259,19 @@ function getQuestion(degree, numSpicchi){
 }
 
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////
-
-
 
 
 function jsonCallback(data){}
 
-
-
 function getJsonQuestion(questionNumber){
-	
 
+	touchable = false;
 
 	$.ajax({
 
-	    url: "http://wheeloffortune.dev:8888/app_dev.php/getQuestion/"+questionNumber,
+	    //url: "http://wheeloffortune.dev:8888/app_dev.php/getQuestionJsonP/"+questionNumber,
+	    url: "http://wheeloffortune.dev:8888/app_dev.php/getQuestionJsonP/"+questionNumber,
 	    type: 'GET',
 	    async: true,
 	    dataType: 'jsonp',
@@ -192,46 +279,57 @@ function getJsonQuestion(questionNumber){
 	    jsonpCallback: 'jsonCallback',
 	 
 	}).success(function(data){
-		console.log(data)
+		
+		generateQuestionBox();
+		
+		number = data.number;
+		text = data.text;
+		answer1 = data.answer1;	
+		answer1Correct = data.answer1Correct;	
+		answer2 = data.answer2;	
+		answer2Correct = data.answer2Correct;	
+		answer3 = data.answer3;	
+		answer3Correct = data.answer3Correct;	
+			
+		questionText.text = text;
+		answer1Text.text = answer1;
+		answer2Text.text = answer2;
+		answer3Text.text = answer3;
+		
+		
+		answer1Text.inputEnabled = true;
+		if(answer1Correct){
+			answer1Text.events.onInputDown.add(correctAnswer, this);
+		}else{
+			answer1Text.events.onInputDown.add(wrongAnswer, this);
+		}
+
+		answer2Text.inputEnabled = true;
+		if(answer2Correct){
+			answer2Text.events.onInputDown.add(correctAnswer, this);
+		}else{
+			answer2Text.events.onInputDown.add(wrongAnswer, this);
+		}
+		
+		answer3Text.inputEnabled = true;
+		if(answer3Correct){
+			answer3Text.events.onInputDown.add(correctAnswer, this);
+		}else{
+			answer3Text.events.onInputDown.add(wrongAnswer, this);
+		}
+			
+		tweenBG.start()
+		tweenQuestion.start();
+		tweenA1.start();
+		tweenA2.start();
+		tweenA3.start();	
+				
 		
 	}).error(function(data){
 		console.log('error')
 		console.log(data)
-		
 	});
-
-
-
-///	makeCorsRequest(questionNumber);
-
-	return;	
-	$.get( "http://wheeloffortune.dev:8888/app_dev.php/getQuestion/"+questionNumber, function( json ) {
-
-
-		number = json.number;
-		text = json.text;
-		answer1 = json.answer1;	
-		answer1Class = json.answer1Correct;	
-		answer2 = json.answer2;	
-		answer2Class = json.answer2Correct;	
-		answer3 = json.answer3;	
-		answer3Class = json.answer3Correct;	
-		
-				
-		/*
-		$('#question').html(text);
-		$('#answer1').html(answer1);
-		$('#answer1').addClass( "isCorrect_"+answer1Class );
-		$('#answer2').html(answer2);
-		$('#answer2').addClass( "isCorrect_"+answer2Class );				
-		$('#answer3').html(answer3);
-		$('#answer3').addClass( "isCorrect_"+answer3Class );				
-		$('#numDomanda').html(number);
-		$('#spicchiograna').show();
- 		*/
-		
-
-	 });
+	
 }
 
 </script>
